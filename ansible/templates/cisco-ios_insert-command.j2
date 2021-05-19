@@ -1,0 +1,8 @@
+Output from show commands via Ansible for: {{ inventory_hostname }}
+
+{% for cmd in command_list %}
+------------------ {{ cmd }} ------------------
+
+{{ cli_result_config.stdout[loop.index0] }}
+
+{% endfor %}

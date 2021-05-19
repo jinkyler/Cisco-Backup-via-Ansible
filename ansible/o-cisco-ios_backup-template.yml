@@ -1,0 +1,69 @@
+---
+- name: "PLAY 1: Get The Data From localhost"
+  hosts: localhost
+  tasks:
+   - name: "TASK 1 : Get Ansible Date/Time Facts"
+     setup:
+       filter: "ansible_date_time"
+       gather_subset: "!all"
+
+   - name: "TASK 2 : Store DTG as Fact"
+     set_fact:
+       DTG: "{{ ansible_date_time.date }}"
+
+   - name: "TASK 3 : Create Directory {{hostvars.localhost.DTG}}"
+     file:
+        path: ~/network-programmability/backups/{{hostvars.localhost.DTG}}
+        state: directory
+  run_once: true
+
+- name: "PLAY 2: Get The Data From Cisco IOS Device"
+  hosts: iosdevices
+  connection: network_cli
+  vars:
+    command_list:
+      - show version
+    #  - show inventory
+    #  - show running-config
+    #  - show vlan brief
+    #  - show spanning-tree
+    #  - show interface status | i connected
+    #  - show interface status | i notconn
+    #  - show interface status | i trunk
+    #  - show cdp neighbors | ex SEP
+      - show ip interface brief | ex admin
+    #  - show tacacs
+    #  - show ip route summary
+    #  - show ntp status
+    #  - show etherchannel summary
+    #  - show cdp neigh
+      - show cdp neighbors detail
+    #  - show clock
+      - show users
+    #  - show boot
+    #  - show int status | inc connected
+      - show arp
+    #  - show ip interface brief | exc admin
+
+  tasks:
+    - name: "TASK 1 : Get The Device Configure"
+      ios_command:
+        commands: "{{ command_list }}"
+      register: cli_result_config
+
+    - name: "TASK 2 : Write a Configure to File & Save to The Path Destination"
+      template:
+        src: "./templates/cisco-ios_insert-command.j2"
+        dest: "~/network-programmability/backups/{{hostvars.localhost.DTG}}/{{ inventory_hostname }}-{{hostvars.localhost.DTG}}-showoutput.txt"
+
+    #------------------------------------------save first index in stdout------------------------------------------
+      #copy:
+      #  content: "{{ cli_result_config.stdout }}\n" #Get content from output from Task 1
+      #  dest: "~/network-programmability/backups/{{hostvars.localhost.DTG}}/{{inventory_hostname}}-{{hostvars.localhost.DTG}}-config.txt"
+
+    #------------------------------save multi index in stdout without input commands------------------------------
+      #lineinfile:
+      #  create: yes
+      #  line: "{{ item }}"
+      #  path: ~/network-programmability/backups/{{hostvars.localhost.DTG}}/{{inventory_hostname}}-{{hostvars.localhost.DTG}}-config.txt
+      #with_items: "{{ cli_result_config.stdout }}"

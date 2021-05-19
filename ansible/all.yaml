@@ -1,0 +1,9 @@
+---
+#
+# all.yaml
+# Play a series of playbooks from local directory.
+#
+
+- import_playbook: o-cisco-ios_banner.yaml
+
+
